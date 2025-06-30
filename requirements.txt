@@ -6,3 +6,4 @@ docx2pdf
 python-docx
 typing_extensions
 openpyxl
+pypandoc
