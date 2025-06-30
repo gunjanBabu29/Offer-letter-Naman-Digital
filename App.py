@@ -2,10 +2,9 @@ import streamlit as st
 import pandas as pd
 from docxtpl import DocxTemplate
 from jinja2 import Environment, BaseLoader
-from docx2pdf import convert
+import pypandoc
 import tempfile
 from pathlib import Path
-import shutil
 import os
 
 st.set_page_config(page_title="Offer Letter Generator", layout="centered")
@@ -44,20 +43,21 @@ if st.button("Generate Offer Letters"):
                 }
 
                 # Save temporary docx
-                docx_path = Path(tmpdir) / f"{name}_temp.docx"
+                docx_path = Path(tmpdir) / f"{name}.docx"
+                pdf_path = output_dir / f"{name}.pdf"
                 template = DocxTemplate(template_file)
                 template.render(context, jinja_env)
                 template.save(docx_path)
 
-                # Convert to PDF
-                pdf_path = output_dir / f"{name}.pdf"
-                convert(str(docx_path), str(pdf_path))
-
-                # Cleanup temp docx
-                docx_path.unlink(missing_ok=True)
+                # Convert to PDF using pypandoc (Linux/Mac friendly)
+                try:
+                    pypandoc.convert_file(str(docx_path), 'pdf', outputfile=str(pdf_path))
+                except Exception as e:
+                    st.error(f"❌ PDF conversion failed for {name}: {e}")
+                    continue
 
             # Show downloadable PDFs
-            st.success("✅ Offer letters generated!")
+            st.success("✅ Offer letters generated successfully!")
             for pdf in output_dir.glob("*.pdf"):
                 with open(pdf, "rb") as f:
                     st.download_button(
